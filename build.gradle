@@ -10,4 +10,8 @@ apply plugin: 'application'
 description = 'A Chip-8 emulator written in java.'
 version = '0.01'
 
+run {
+    args = ["./src/main/java/chip8/PONG"]
+}
+
 mainClassName = 'chip8.Chip8'
