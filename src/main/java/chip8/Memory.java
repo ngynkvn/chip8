@@ -5,25 +5,52 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-class Memory {
+class Memory
+{
     private byte[] memory;
+    private final short[] digitAddresses = {0x0, 0x5, 0xA, 0xF, 0x14, 0x19, 0x1E, 0x23, 0x28, 0x2D, 0x32, 0x37, 0x3C,
+            0x41, 0x46, 0x4B};
+    private final int[] digitSprites = {0xF0, 0x90, 0x90, 0x90, 0xF0, 0x20, 0x60, 0x20, 0x20, 0x70, 0xF0, 0x10, 0xF0,
+            0x80, 0xF0, 0xF0, 0x10, 0xF0, 0x10, 0xF0, 0x90, 0x90, 0xF0, 0x10, 0x10, 0xF0, 0x80, 0xF0, 0x10, 0xF0, 0xF0,
+            0x80, 0xF0, 0x90, 0xF0, 0xF0, 0x10, 0x20, 0x40, 0x40, 0xF0, 0x90, 0xF0, 0x90, 0xF0, 0xF0, 0x90, 0xF0, 0x10,
+            0xF0, 0xF0, 0x90, 0xF0, 0x90, 0x90, 0xE0, 0x90, 0xE0, 0x90, 0xE0, 0xF0, 0x80, 0x80, 0x80, 0xF0, 0xE0, 0x90,
+            0x90, 0x90, 0xE0, 0xF0, 0x80, 0xF0, 0x80, 0xF0, 0xF0, 0x80, 0xF0, 0x80, 0x80};
 
     Memory() {
         memory = new byte[4096];
+        for (int i = 0; i < digitSprites.length; i++) {
+            memory[i] = (byte) digitSprites[i];
+        }
+
     }
 
     void load(File f) throws FileNotFoundException, IOException {
         if (!f.exists())
             throw new FileNotFoundException("Couldn't find file specified.");
         FileInputStream fin = new FileInputStream(f);
-        for (int i = 512; fin.available() > 0; i++) { //Start at pos 512 because 0-512 is reserved for intepreter.
+        for (int i = 512; fin.available() > 0; i++) { // Start at pos 512 because 0-512 is reserved for intepreter.
             int b = fin.read();
             memory[i] = (byte) b;
+
         }
         fin.close();
     }
 
     short readInstruction(short pc) {
-        return (short) (memory[pc] << 8 | memory[pc + 1]);
+        int instr = Byte.toUnsignedInt(memory[pc]) << 8;
+        instr |= Byte.toUnsignedInt(memory[pc + 1]);
+        return (short) instr;
+    }
+
+    byte readByte(int i) {
+        return memory[i];
+    }
+
+    void writeToMem(int i, byte b) {
+        memory[i] = b;
+    }
+
+    short getAddressFor(int iDigit) {
+        return digitAddresses[iDigit];
     }
 }
