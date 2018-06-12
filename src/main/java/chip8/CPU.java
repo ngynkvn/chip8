@@ -3,25 +3,27 @@ package chip8;
 class CPU
 {
     private final OpcodeInterpreter opi;
-    private final Memory mem;
+    final Memory mem;
+    final Display display;
     short pc;
-    private short I;
+    short I;
     private short[] stack;
     private byte sp;
     byte[] register;
-    private byte dT;
-    private byte pT;
+    byte dT;
+    byte sT;
 
      CPU(Memory mem) {
-        this.opi = new OpcodeInterpreter(this);
+        this.display = new Display();
         this.mem = mem;
+        this.opi = new OpcodeInterpreter(this);
         this.register = new byte[16];
         this.stack = new short[16];
-        this.I = 0;
-        this.dT = 0;
-        this.pT = 0;
-        sp = 0;
-        pc = 512; //start at 512 for ROM
+        this.I = 0;                  // Memory address store
+        this.dT = 0;                 // -----------delay and sound timers
+        this.sT = 0;                 // ----------^
+        sp = 0;                      // stack pointer
+        pc = 512;                    // program counter, starts at 512 for ROM
     }
     
     void cycle() {
@@ -41,4 +43,8 @@ class CPU
     void returnSub() {
         pc = stack[--sp];
 	}
+
+    void setIDigit(int IDigit) {
+        I = mem.getAddressFor(IDigit);
+    }
 }
