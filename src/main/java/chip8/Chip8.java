@@ -1,30 +1,29 @@
 package chip8;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 public class Chip8 {
 
-    static byte[] mem;
-    static short pc;
-    static byte sp;
-    static byte[] registers; //Vx
-    static byte delayRegister;
-    static byte timeRegister;
-    static short I;
-    static short[] stack;
-    static boolean disp;
+    static CPU cpu;
+    static Memory mem;
 
-    public static void main(String[] args) {
-        init();
+    public static void main(String[] args) throws Exception {
+
+        if (args.length < 1) {
+            System.out.println("Usage: Chip8 [file_name]");
+            return;
+        }
+        init(args[0]);
+        for(int i = 0; i < 20; i++)
+            cpu.cycle();
     }
 
-    private static void init() {
-        mem = new byte[4096];
-        pc = 512;
-        registers = new byte[16];
-        delayRegister = 0;
-        timeRegister = 0;
-        stack = new short[16];
-        sp = 0;
-        I = 0;
-        disp = new boolean[64 * 32];
+    private static void init(String fileName) throws FileNotFoundException, IOException {
+        mem = new Memory();
+        mem.load(new File(fileName));
+        cpu = new CPU(mem);
+        // disp = new Display();
     }
 }
