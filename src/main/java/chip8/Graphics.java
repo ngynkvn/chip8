@@ -1,10 +1,11 @@
 package chip8;
 
-class Display {
+class Graphics
+{
     
     private int[] display;
 
-    Display() {
+    Graphics() {
         display = new int[64 * 32];
     }
 
@@ -12,12 +13,16 @@ class Display {
         display = new int[64 * 32];
     }
 
-    void draw(int x, int y, int lastNibble) {
+    boolean draw(int x, int y, int lastNibble) {
         int startLocation = x + (y << 5);
         int mask = 1 << 8;
+        boolean collision = false;
         for(int i = startLocation; i < startLocation+8; i++) {
-            display[i] ^= (lastNibble & mask) != 0 ? 1 : 0;
+            int prev = display[i];
+            display[i] ^= ((lastNibble & mask) != 0) ? 1 : 0;
+            collision = (display[i] != prev) || collision;
             mask >>>= 1;
         }
+        return collision;
     }
 }

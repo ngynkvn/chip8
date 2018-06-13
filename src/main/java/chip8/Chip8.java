@@ -4,7 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-public class Chip8 {
+public class Chip8
+{
 
     static CPU cpu;
     static Memory mem;
@@ -23,7 +24,7 @@ public class Chip8 {
     private static void init(String fileName) throws FileNotFoundException, IOException {
         mem = new Memory();
         mem.load(new File(fileName));
-        cpu = new CPU(mem);
+        cpu = new CPU(mem, new Graphics());
         // disp = new Display();
     }
 }

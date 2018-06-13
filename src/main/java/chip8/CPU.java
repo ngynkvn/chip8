@@ -4,7 +4,7 @@ class CPU
 {
     private final OpcodeInterpreter opi;
     final Memory mem;
-    final Display display;
+    final Graphics graphics;
     short pc;
     short I;
     private short[] stack;
@@ -13,8 +13,8 @@ class CPU
     byte dT;
     byte sT;
 
-     CPU(Memory mem) {
-        this.display = new Display();
+     CPU(Memory mem, Graphics disp) {
+        this.graphics = disp;
         this.mem = mem;
         this.opi = new OpcodeInterpreter(this);
         this.register = new byte[16];

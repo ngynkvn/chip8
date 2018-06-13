@@ -1,22 +1,22 @@
 package chip8;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 class OpcodeInterpreter
 {
     private CPU cpu;
     private Memory mem;
-    private Display display;
+    private Graphics graphics;
     private Random rand;
 
     OpcodeInterpreter(CPU cpu) {
         this.cpu = cpu;
         this.mem = cpu.mem;
-        this.display = cpu.display;
+        this.graphics = cpu.graphics;
         this.rand = new Random();
     }
 
@@ -28,11 +28,11 @@ class OpcodeInterpreter
         final int y = (code & 0x00F0) >> 4;
         final int kk = code & 0x0FF;
         short ptr;
-        System.out.printf("%X\n", code);
+//        System.out.printf("received instruction: %X\n", code);
         switch (firstNibble) {
             case 0x0000:
                 if (code == 0x0E0)
-                    display.clear();
+                    graphics.clear();
                 else
                     cpu.returnSub();
                 break;
@@ -106,13 +106,18 @@ class OpcodeInterpreter
                 break;
             case 0xD000:
                 // DRAW x, y, n
-                display.draw(x, y, lastNibble);
+                if(graphics.draw(x,y, lastNibble))
+                    cpu.register[0x000F] = 1;
+                else
+                    cpu.register[0x00f] = 0;
                 break;
             case 0xE000:
                 switch (lastNibble) {
                     case 0x000E:
+                        // skipIf(KeyboardInput::keyIsDown, x);
                         break;
                     case 0x0001:
+                        // skipIf(KeyboardInput::keyIsReleased, x);
                         break;
                     default:
                         throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
@@ -123,9 +128,12 @@ class OpcodeInterpreter
                 switch (lastByte) {
                     case 0x0007:
                         cpu.register[x] = cpu.dT;
+                        break;
                     case 0x000A:
-                        System.out.println(String.format("not implemented! -> %X", code));
-                        // wait for keypress
+                        // if(!KeyboardInput.anyKeyDown())
+                        // {
+                        //    cpu.pc -= 2;
+                        // }
                         break;
                     case 0x0015:
                         cpu.dT = cpu.register[x];
@@ -141,21 +149,25 @@ class OpcodeInterpreter
                         cpu.setIDigit(x);
                         break;
                     case 0x0033:
-                        System.out.println(String.format("not implemented! -> %X", code));
                         //BCD
+                        byte num = cpu.register[x];
+                        byte hund = (byte) (Byte.toUnsignedInt(num) / 100);
+                        byte ten = (byte) (Byte.toUnsignedInt(num) % 100 / 10);
+                        byte one = (byte) (Byte.toUnsignedInt(num) % 10);
+                        mem.writeToMem(cpu.I, hund);
+                        mem.writeToMem(cpu.I + 1, ten);
+                        mem.writeToMem(cpu.I + 2, one);
                         break;
                     case 0x0055:
                         ptr = cpu.I;
-                        for(int i = 0; i < x; i++){
-                            mem.writeToMem(ptr, cpu.register[i]);
-                            ptr++;
+                        for (int i = 0; i < x; i++) {
+                            mem.writeToMem(ptr + i, cpu.register[i]);
                         }
                         break;
                     case 0x0065:
                         ptr = cpu.I;
-                        for(int i = 0; i < x; i++) {
-                            cpu.register[i] = mem.readByte(ptr+i);
-                            ptr++;
+                        for (int i = 0; i < x; i++) {
+                            cpu.register[i] = mem.readByte(ptr + i);
                         }
                         break;
                     default:
@@ -169,6 +181,12 @@ class OpcodeInterpreter
 
     private void skipIf(BiPredicate<Integer, Integer> f, Integer a, Integer b) {
         if (f.test(a, b)) {
+            cpu.pc += 2;
+        }
+    }
+
+    private void skipIf(Predicate<Integer> f, Integer a) {
+        if (f.test(a)) {
             cpu.pc += 2;
         }
     }
