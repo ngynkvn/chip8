@@ -33,11 +33,13 @@ class CPU
 
     void jumpTo(int addr) {
         pc = (short) addr;
+        pc -= 2;
 	}
 
     void subroutine(int addr) {
         stack[sp++] = pc;
         pc = (short) addr;
+        pc -= 2;
 	}
 
     void returnSub() {

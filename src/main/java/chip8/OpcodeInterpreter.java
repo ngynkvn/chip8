@@ -37,12 +37,14 @@ class OpcodeInterpreter
                     cpu.returnSub();
                 break;
             case 0x1000:
+                System.out.printf("JUMP: %X, int value: %d\n", address, address);
                 cpu.jumpTo(address);
                 break;
             case 0x2000:
                 cpu.subroutine(address);
                 break;
             case 0x3000:
+                System.out.printf("register%d is %d, kk is %d\n", x, cpu.register[x], kk);
                 skipIf(Objects::equals, (int) cpu.register[x], kk);
                 break;
             case 0x4000:
@@ -106,7 +108,9 @@ class OpcodeInterpreter
                 break;
             case 0xD000:
                 // DRAW x, y, n
-                if(graphics.draw(x,y, lastNibble))
+                System.out.printf("%X\n", code);
+//                System.out.printf("DRAWING %d %d %d\n", cpu.register[x], cpu.register[y], lastNibble);
+                if (graphics.draw(cpu.register[x], cpu.register[y], lastNibble, cpu.I, mem))
                     cpu.register[0x000F] = 1;
                 else
                     cpu.register[0x00f] = 0;
@@ -114,10 +118,10 @@ class OpcodeInterpreter
             case 0xE000:
                 switch (lastNibble) {
                     case 0x000E:
-                        // skipIf(KeyboardInput::keyIsDown, x);
+                        skipIf(KeyboardInput::keyIsDown, x);
                         break;
                     case 0x0001:
-                        // skipIf(KeyboardInput::keyIsReleased, x);
+                        skipIf(KeyboardInput::keyIsReleased, x);
                         break;
                     default:
                         throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
@@ -130,10 +134,9 @@ class OpcodeInterpreter
                         cpu.register[x] = cpu.dT;
                         break;
                     case 0x000A:
-                        // if(!KeyboardInput.anyKeyDown())
-                        // {
-                        //    cpu.pc -= 2;
-                        // }
+                        if (!KeyboardInput.anyKeyDown()) {
+                            cpu.pc -= 2;
+                        }
                         break;
                     case 0x0015:
                         cpu.dT = cpu.register[x];

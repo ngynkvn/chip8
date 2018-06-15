@@ -5,11 +5,14 @@ import static org.lwjgl.glfw.GLFW.*;
 
 class KeyboardInput
 {
-    private static int key;
-    private static int action;
     private static HashMap<Character, Integer> registerMap;
+    private static int[] state;
+    private static int action;
     KeyboardInput() {
         registerMap = new HashMap<>();
+        state = new int[18];
+        state[17] = GLFW_RELEASE;
+        action = GLFW_RELEASE;
         registerMap.put('1', 0x001);
         registerMap.put('2', 0x002);
         registerMap.put('3', 0x003);
@@ -29,19 +32,22 @@ class KeyboardInput
     }
 
     void receive(int key, int action) {
-        KeyboardInput.key = key;
-        KeyboardInput.action = action;
-//        System.out.println(String.format("Got key: %c, state: %d, corresponds to register: %X", key, action, registerMap.getOrDefault((char)key,-1)));
+        System.out.println(String.format("Got key: %c, state: %d, corresponds to register: %X", key, action, registerMap.getOrDefault((char)key,null)));
+        key = registerMap.getOrDefault((char) key, -1);
+        if (key != -1){
+            state[key] = action;
+            KeyboardInput.action = action;
+        }
     }
     //hacky. fix this
     static boolean keyIsDown(int x) {
-        return registerMap.getOrDefault((char)key, -1) == x && action == GLFW_PRESS;
+        return state[registerMap.getOrDefault((char)x, null)] == GLFW_PRESS;
     }
     static boolean keyIsReleased(int x) {
-        return registerMap.getOrDefault((char)key, -1) == x && action == GLFW_RELEASE;
+        return state[registerMap.getOrDefault((char)x, 17)] == GLFW_RELEASE;
     }
 
-    public static boolean anyKeyDown() {
+    static boolean anyKeyDown() {
         return action == GLFW_PRESS;
     }
 }
