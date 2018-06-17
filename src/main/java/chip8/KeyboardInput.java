@@ -32,7 +32,6 @@ class KeyboardInput
     }
 
     void receive(int key, int action) {
-//        System.out.println(String.format("Got key: %c, state: %d, corresponds to register: %X", key, action, registerMap.getOrDefault((char)key,null)));
         key = registerMap.getOrDefault((char) key, -1);
         if (key != -1){
             state[key] = action;

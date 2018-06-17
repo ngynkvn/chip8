@@ -85,7 +85,7 @@ public class Chip8
         if (!glfwInit())
             throw new IllegalStateException("Couldn't initialize GLFW");
 
-//        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
         window = glfwCreateWindow(640, 320, "Chip-8 Emulator", NULL, NULL);
         if (window == NULL)
@@ -99,5 +99,7 @@ public class Chip8
             else
                 kb.receive(key, action);
         });
+
+        glfwSetFramebufferSizeCallback(window, (window, width, height) -> glViewport(0,0,width,height));
     }
 }
