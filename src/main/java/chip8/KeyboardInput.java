@@ -32,7 +32,7 @@ class KeyboardInput
     }
 
     void receive(int key, int action) {
-        System.out.println(String.format("Got key: %c, state: %d, corresponds to register: %X", key, action, registerMap.getOrDefault((char)key,null)));
+//        System.out.println(String.format("Got key: %c, state: %d, corresponds to register: %X", key, action, registerMap.getOrDefault((char)key,null)));
         key = registerMap.getOrDefault((char) key, -1);
         if (key != -1){
             state[key] = action;
@@ -40,11 +40,11 @@ class KeyboardInput
         }
     }
     //hacky. fix this
-    static boolean keyIsDown(int x) {
-        return state[registerMap.getOrDefault((char)x, null)] == GLFW_PRESS;
+    static boolean keyIsDown(byte x) {
+        return state[x] == GLFW_PRESS;
     }
-    static boolean keyIsReleased(int x) {
-        return state[registerMap.getOrDefault((char)x, 17)] == GLFW_RELEASE;
+    static boolean keyIsReleased(byte x) {
+        return state[x] == GLFW_RELEASE;
     }
 
     static boolean anyKeyDown() {
