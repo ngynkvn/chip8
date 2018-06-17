@@ -1,9 +1,6 @@
 package chip8;
 
-import java.util.Objects;
 import java.util.Random;
-import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 class OpcodeInterpreter
@@ -27,8 +24,7 @@ class OpcodeInterpreter
         final int x = (code & 0x0F00) >> 8;
         final int y = (code & 0x00F0) >> 4;
         final int kk = code & 0x0FF;
-        short ptr;
-//        System.out.printf("received instruction: %X\n", code);
+
         switch (firstNibble) {
             case 0x0000:
                 if (code == 0x0E0)
@@ -37,21 +33,19 @@ class OpcodeInterpreter
                     cpu.returnSub();
                 break;
             case 0x1000:
-                System.out.printf("JUMP: %X, int value: %d\n", address, address);
                 cpu.jumpTo(address);
                 break;
             case 0x2000:
                 cpu.subroutine(address);
                 break;
             case 0x3000:
-                System.out.printf("register%d is %d, kk is %d\n", x, cpu.register[x], kk);
-                skipIf(Objects::equals, (int) cpu.register[x], kk);
+                skipIf(cpu.register[x] == kk);
                 break;
             case 0x4000:
-                skipIf((a, b) -> !Objects.equals(a, b), (int) cpu.register[x], kk);
+                skipIf(cpu.register[x] != kk);
                 break;
             case 0x5000:
-                skipIf(Objects::equals, (int) cpu.register[x], (int) cpu.register[y]);
+                skipIf(cpu.register[x] == kk);
                 break;
             case 0x6000:
                 cpu.register[x] = (byte) kk;
@@ -74,28 +68,31 @@ class OpcodeInterpreter
                         cpu.register[x] ^= cpu.register[y];
                         break;
                     case 0x004:
-                        ifSetVF((i, j) -> Byte.toUnsignedInt(cpu.register[x]) + Byte.toUnsignedInt(cpu.register[y]) > 255,
-                                i -> cpu.register[x] += cpu.register[y]);
+                        ifSetVF((Byte.toUnsignedInt(cpu.register[x]) + Byte.toUnsignedInt(cpu.register[y])) > 255);
+                        cpu.register[x] += cpu.register[y];
                         break;
                     case 0x005:
-                        ifSetVF((i, j) -> cpu.register[x] > cpu.register[y], i -> cpu.register[x] -= cpu.register[y]);
+                        ifSetVF(cpu.register[x] > cpu.register[y]);
+                        cpu.register[x] -= cpu.register[y];
                         break;
                     case 0x006:
-                        ifSetVF((i, j) -> (cpu.register[x] & 1) == 1, i -> cpu.register[x] /= 2);
+                        ifSetVF((cpu.register[x] & 1) == 1);
+                        cpu.register[x] /= 2;
                         break;
                     case 0x007:
-                        ifSetVF((i, j) -> cpu.register[y] > cpu.register[x],
-                                i -> cpu.register[x] = (byte) (cpu.register[y] - cpu.register[x]));
+                        ifSetVF(cpu.register[y] > cpu.register[x]);
+                        cpu.register[x] = (byte) (cpu.register[y] - cpu.register[x]);
                         break;
                     case 0x00E:
-                        ifSetVF((i, j) -> (cpu.register[x] >>> 7) == 1, i -> cpu.register[x] *= 2);
+                        ifSetVF((cpu.register[x] >>> 7) == 1);
+                        cpu.register[x] *= 2;
                         break;
                     default:
                         throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
                 }
                 break;
             case 0x9000:
-                skipIf((a, b) -> !Objects.equals(a, b), (int) cpu.register[x], (int) cpu.register[y]);
+                skipIf(cpu.register[x] != cpu.register[y]);
                 break;
             case 0xA000:
                 cpu.I = (short) address;
@@ -108,20 +105,15 @@ class OpcodeInterpreter
                 break;
             case 0xD000:
                 // DRAW x, y, n
-                System.out.printf("%X\n", code);
-//                System.out.printf("DRAWING %d %d %d\n", cpu.register[x], cpu.register[y], lastNibble);
-                if (graphics.draw(cpu.register[x], cpu.register[y], lastNibble, cpu.I, mem))
-                    cpu.register[0x000F] = 1;
-                else
-                    cpu.register[0x00f] = 0;
+                ifSetVF(graphics.draw(cpu.register[x], cpu.register[y], lastNibble, cpu.I, mem));
                 break;
             case 0xE000:
                 switch (lastNibble) {
                     case 0x000E:
-                        skipIf(KeyboardInput::keyIsDown, x);
+                        skipIf(KeyboardInput::keyIsDown, cpu.register[x]);
                         break;
                     case 0x0001:
-                        skipIf(KeyboardInput::keyIsReleased, x);
+                        skipIf(KeyboardInput::keyIsReleased, cpu.register[x]);
                         break;
                     default:
                         throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
@@ -149,7 +141,7 @@ class OpcodeInterpreter
                         break;
                     case 0x0029:
                         //set I to digit Vx
-                        cpu.setIDigit(x);
+                        cpu.setIDigit(cpu.register[x]);
                         break;
                     case 0x0033:
                         //BCD
@@ -162,15 +154,13 @@ class OpcodeInterpreter
                         mem.writeToMem(cpu.I + 2, one);
                         break;
                     case 0x0055:
-                        ptr = cpu.I;
                         for (int i = 0; i < x; i++) {
-                            mem.writeToMem(ptr + i, cpu.register[i]);
+                            mem.writeToMem(cpu.I + i, cpu.register[i]);
                         }
                         break;
                     case 0x0065:
-                        ptr = cpu.I;
                         for (int i = 0; i < x; i++) {
-                            cpu.register[i] = mem.readByte(ptr + i);
+                            cpu.register[i] = mem.readByte(cpu.I + i);
                         }
                         break;
                     default:
@@ -182,20 +172,18 @@ class OpcodeInterpreter
         }
     }
 
-    private void skipIf(BiPredicate<Integer, Integer> f, Integer a, Integer b) {
-        if (f.test(a, b)) {
+    private void skipIf(boolean predicate) {
+        if (predicate) {
             cpu.pc += 2;
         }
     }
 
-    private void skipIf(Predicate<Integer> f, Integer a) {
+    private void skipIf(Predicate<Byte> f, Byte a) {
         if (f.test(a)) {
             cpu.pc += 2;
         }
     }
-
-    private void ifSetVF(BiPredicate<Integer, Integer> f, Consumer<Object> sideEffect) {
-        cpu.register[0x00F] = f.test(null, null) ? (byte) 1 : (byte) 0;
-        sideEffect.accept(null);
+    private void ifSetVF(boolean predicate) {
+        cpu.register[0x00F] = predicate ? (byte) 1 : (byte) 0;
     }
 }
