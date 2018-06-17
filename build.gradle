@@ -33,7 +33,7 @@ description = 'A Chip-8 emulator written in java.'
 version = '0.01'
 
 run {
-    args = ["./src/main/java/chip8/pongy.ch8"]
+    args = ["./games/pongy.ch8"]
 }
 
 task showMeCache << {
