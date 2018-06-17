@@ -7,18 +7,18 @@ class CPU
     final Graphics graphics;
     private long cycle;
     short pc;
-    short I;
+    int I;
     private short[] stack;
     private byte sp;
-    byte[] register;
+    int[] register;
     byte dT;
-    byte sT;
+    int sT;
 
      CPU(Memory mem, Graphics disp) {
         this.graphics = disp;
         this.mem = mem;
         this.opi = new OpcodeInterpreter(this);
-        this.register = new byte[16];
+        this.register = new int[16];
         this.stack = new short[16];
         this.cycle = 0;
         this.I = 0;                  // Memory address store

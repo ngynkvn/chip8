@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL15.*;
@@ -138,16 +137,15 @@ class Graphics
     }
 
     boolean draw(int x, int y, int height, int I, Memory mem) {
-        int startLocation = x + (y << 5);
         boolean collision = false;
         for(int i = 0; i < height; i++) {
-            int loc = startLocation + (i << 6);
-            byte b = mem.readByte(I+i);
+            int b = mem.readByte(I+i);
             int mask = 1 << 7;
-            for(int j = loc; j < loc+8; j++) {
-                int prev = display[j];
-                display[j] ^= ((b & mask) != 0) ? 0xFFFFFFFF : 0;
-                if (prev == 0xFFFFFFFF && display[j] == 0) //caused pixel to be erased.
+            for(int j = 0; j < 8; j++) {
+                int pos = (x + j + ((y + i) << 6)) % 2048;
+                int prev = display[pos];
+                display[pos] ^= ((b & mask) != 0) ? 0xFFFFFFFF : 0;
+                if (prev == 0xFFFFFFFF && display[pos] == 0) //caused pixel to be erased.
                     collision = true;
                 mask >>>= 1;
             }

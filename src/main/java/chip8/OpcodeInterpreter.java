@@ -24,7 +24,6 @@ class OpcodeInterpreter
         final int x = (code & 0x0F00) >> 8;
         final int y = (code & 0x00F0) >> 4;
         final int kk = code & 0x0FF;
-
         switch (firstNibble) {
             case 0x0000:
                 if (code == 0x0E0)
@@ -48,10 +47,10 @@ class OpcodeInterpreter
                 skipIf(cpu.register[x] == kk);
                 break;
             case 0x6000:
-                cpu.register[x] = (byte) kk;
+                cpu.register[x] = kk;
                 break;
             case 0x7000:
-                cpu.register[x] += (byte) kk;
+                cpu.register[x] += kk;
                 break;
             case 0x8000:
                 switch (lastNibble) {
@@ -68,24 +67,32 @@ class OpcodeInterpreter
                         cpu.register[x] ^= cpu.register[y];
                         break;
                     case 0x004:
-                        ifSetVF((Byte.toUnsignedInt(cpu.register[x]) + Byte.toUnsignedInt(cpu.register[y])) > 255);
+                        ifSetVF((cpu.register[x] + cpu.register[y]) > 255);
                         cpu.register[x] += cpu.register[y];
+                        if(cpu.register[x] > 255)
+                            cpu.register[x] -= 256;
                         break;
                     case 0x005:
-                        ifSetVF(cpu.register[x] > cpu.register[y]);
+                        ifSetVF(cpu.register[x] >= cpu.register[y]);
                         cpu.register[x] -= cpu.register[y];
+                        if(cpu.register[x] < 0)
+                            cpu.register[x] += 256;
                         break;
                     case 0x006:
                         ifSetVF((cpu.register[x] & 1) == 1);
-                        cpu.register[x] /= 2;
+                        cpu.register[x] >>= 1;
                         break;
                     case 0x007:
-                        ifSetVF(cpu.register[y] > cpu.register[x]);
-                        cpu.register[x] = (byte) (cpu.register[y] - cpu.register[x]);
+                        ifSetVF(cpu.register[y] >= cpu.register[x]);
+                        cpu.register[x] = (cpu.register[y] - cpu.register[x]);
+                        if(cpu.register[x] < 0)
+                            cpu.register[x] += 256;
                         break;
                     case 0x00E:
                         ifSetVF((cpu.register[x] >>> 7) == 1);
-                        cpu.register[x] *= 2;
+                        cpu.register[x] <<= 1;
+                        if(cpu.register[x] > 255)
+                            cpu.register[x] -= 256;
                         break;
                     default:
                         throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
@@ -101,7 +108,7 @@ class OpcodeInterpreter
                 cpu.pc = (short) (address + cpu.register[0]);
                 break;
             case 0xC000:
-                cpu.register[x] = (byte) (rand.nextInt(256) & kk);
+                cpu.register[x] = (rand.nextInt(256) & kk);
                 break;
             case 0xD000:
                 // DRAW x, y, n
@@ -131,7 +138,7 @@ class OpcodeInterpreter
                         }
                         break;
                     case 0x0015:
-                        cpu.dT = cpu.register[x];
+                        cpu.dT = (byte)cpu.register[x];
                         break;
                     case 0x0018:
                         cpu.sT = cpu.register[x];
@@ -145,22 +152,22 @@ class OpcodeInterpreter
                         break;
                     case 0x0033:
                         //BCD
-                        byte num = cpu.register[x];
-                        byte hund = (byte) (Byte.toUnsignedInt(num) / 100);
-                        byte ten = (byte) (Byte.toUnsignedInt(num) % 100 / 10);
-                        byte one = (byte) (Byte.toUnsignedInt(num) % 10);
+                        int num = cpu.register[x];
+                        byte hund = (byte)(num / 100);
+                        byte ten = (byte) (num % 100 / 10);
+                        byte one = (byte) (num % 10);
                         mem.writeToMem(cpu.I, hund);
                         mem.writeToMem(cpu.I + 1, ten);
                         mem.writeToMem(cpu.I + 2, one);
                         break;
                     case 0x0055:
-                        for (int i = 0; i < x; i++) {
-                            mem.writeToMem(cpu.I + i, cpu.register[i]);
+                        for (int i = 0; i <= x; i++) {
+                            mem.writeToMem(cpu.I + i, (byte)cpu.register[i]);
                         }
                         break;
                     case 0x0065:
-                        for (int i = 0; i < x; i++) {
-                            cpu.register[i] = mem.readByte(cpu.I + i);
+                        for (int i = 0; i <= x; i++) {
+                            cpu.register[i] = Byte.toUnsignedInt(mem.readByte(cpu.I + i));
                         }
                         break;
                     default:
@@ -178,7 +185,7 @@ class OpcodeInterpreter
         }
     }
 
-    private void skipIf(Predicate<Byte> f, Byte a) {
+    private void skipIf(Predicate<Integer> f, int a) {
         if (f.test(a)) {
             cpu.pc += 2;
         }

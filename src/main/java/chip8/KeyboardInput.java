@@ -40,10 +40,10 @@ class KeyboardInput
         }
     }
     //hacky. fix this
-    static boolean keyIsDown(byte x) {
+    static boolean keyIsDown(Integer x) {
         return state[x] == GLFW_PRESS;
     }
-    static boolean keyIsReleased(byte x) {
+    static boolean keyIsReleased(Integer x) {
         return state[x] == GLFW_RELEASE;
     }
 
