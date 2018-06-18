@@ -39,20 +39,23 @@ public class Chip8
             glfwSwapBuffers(window);
 
             cpu.cycle();
-//            accrual += 2;
-            accrual += deltaT();
-            if (accrual >= 17) {
-                cpu.dT -= 1;
-                cpu.sT -= 1;
-                accrual -= 17;
-                if(cpu.dT < 0)
-                    cpu.dT = 0;
-                if(cpu.sT < 0)
-                    cpu.sT = 0;
-            }
+            timeClocks();
 
             Thread.sleep(2);
             glfwPollEvents();
+        }
+    }
+
+    private static void timeClocks() {
+        accrual += deltaT();
+        if (accrual >= 17) {
+            cpu.dT -= 1;
+            cpu.sT -= 1;
+            accrual -= 17;
+            if (cpu.dT < 0)
+                cpu.dT = 0;
+            if (cpu.sT < 0)
+                cpu.sT = 0;
         }
     }
 
@@ -60,7 +63,6 @@ public class Chip8
         long time = getTime();
         long delta = time - lastTime;
         lastTime = time;
-//        System.out.println(delta);
         return delta;
     }
 
@@ -100,6 +102,7 @@ public class Chip8
                 kb.receive(key, action);
         });
 
-        glfwSetFramebufferSizeCallback(window, (window, width, height) -> glViewport(0,0,width,height));
+        glfwSetFramebufferSizeCallback(window, (window, width, height) -> glViewport(0, 0, width, height));
     }
+
 }

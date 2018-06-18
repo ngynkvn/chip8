@@ -5,7 +5,6 @@ class CPU
     private final OpcodeInterpreter opi;
     final Memory mem;
     final Graphics graphics;
-    private long cycle;
     short pc;
     int I;
     private short[] stack;
@@ -20,7 +19,6 @@ class CPU
         this.opi = new OpcodeInterpreter(this);
         this.register = new int[16];
         this.stack = new short[16];
-        this.cycle = 0;
         this.I = 0;                  // Memory address store
         this.dT = 0;                 // -----------delay and sound timers
         this.sT = 0;                 // ----------^
@@ -31,7 +29,6 @@ class CPU
     void cycle() {
         opi.dispatchCode(mem.readInstruction(pc));
         pc += 2;
-        cycle++;
     }
 
     void jumpTo(int addr) {

@@ -36,8 +36,8 @@ class Graphics
     }
 
     static void createGL() {
-        GLCapabilities caps = GL.createCapabilities();
-        Callback debugProc = GLUtil.setupDebugMessageCallback();
+        GL.createCapabilities();
+        GLUtil.setupDebugMessageCallback();
         float vertices[] = { //lifted from open.gl/textures
                 //  Position    Texcoords
                 -1.0f,  1.0f, 0.0f, 0.0f, // Top-left 0
