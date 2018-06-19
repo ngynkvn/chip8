@@ -131,8 +131,10 @@ class OpcodeInterpreter
                         cpu.register[x] = cpu.dT;
                         break;
                     case 0x000A:
-                        if (!KeyboardInput.anyKeyDown()) {
+                        if (KeyboardInput.anyKeyDown() == -1) {
                             cpu.pc -= 2;
+                        } else {
+                            cpu.register[x] = (byte)KeyboardInput.anyKeyDown();
                         }
                         break;
                     case 0x0015:

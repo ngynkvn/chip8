@@ -2,27 +2,22 @@ package chip8;
 
 //lwjgl imports
 
-import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 
 import java.io.*;
-import java.nio.*;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Chip8
 {
 
     private static CPU cpu;
-    private static Memory mem;
-    private static Graphics disp;
+    private static Memory memory;
+    private static Graphics display;
     private static KeyboardInput kb;
     private static long window;
-    private static long lastTime;
-    private static long accrual;
 
     public static void main(String[] args) throws Exception {
 //        Configuration.DEBUG.set(true);
@@ -35,50 +30,23 @@ public class Chip8
         glClearColor(0, 1, 1, 0);
         while (!glfwWindowShouldClose(window)) {
 
-            Graphics.render();
-            glfwSwapBuffers(window);
+            display.render();
 
             cpu.cycle();
-            timeClocks();
+            cpu.timeClocks();
 
             Thread.sleep(2);
             glfwPollEvents();
         }
     }
 
-    private static void timeClocks() {
-        accrual += deltaT();
-        if (accrual >= 17) {
-            cpu.dT -= 1;
-            cpu.sT -= 1;
-            accrual -= 17;
-            if (cpu.dT < 0)
-                cpu.dT = 0;
-            if (cpu.sT < 0)
-                cpu.sT = 0;
-        }
-    }
-
-    private static long deltaT() {
-        long time = getTime();
-        long delta = time - lastTime;
-        lastTime = time;
-        return delta;
-    }
-
-    private static long getTime() {
-        return System.nanoTime() / 1_000_000;
-    }
-
     private static void init(String fileName) throws IOException {
-        mem = new Memory(); //Move later.
-        mem.load(new File(fileName));
         kb = new KeyboardInput();
-        disp = new Graphics(); //Move later.
-        cpu = new CPU(mem, disp);
         createWindowGLFW();
-        Graphics.createGL();
-        lastTime = getTime();
+        display = new Graphics(window);
+        memory = new Memory();
+        memory.load(new File(fileName));
+        cpu = new CPU(memory, display);
     }
 
     private static void createWindowGLFW() {

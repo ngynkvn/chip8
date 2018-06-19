@@ -8,10 +8,12 @@ class KeyboardInput
     private static HashMap<Character, Integer> registerMap;
     private static int[] state;
     private static int action;
+    private static int latestKey;
+
     KeyboardInput() {
         registerMap = new HashMap<>();
-        state = new int[18];
-        state[17] = GLFW_RELEASE;
+        state = new int[16];
+        latestKey = -1;
         action = GLFW_RELEASE;
         registerMap.put('1', 0x001);
         registerMap.put('2', 0x002);
@@ -35,6 +37,7 @@ class KeyboardInput
         key = registerMap.getOrDefault((char) key, -1);
         if (key != -1){
             state[key] = action;
+            KeyboardInput.latestKey = key;
             KeyboardInput.action = action;
         }
     }
@@ -46,7 +49,10 @@ class KeyboardInput
         return state[x] == GLFW_RELEASE;
     }
 
-    static boolean anyKeyDown() {
-        return action == GLFW_PRESS;
+    static int anyKeyDown() {
+        if(action == GLFW_PRESS)
+            return latestKey;
+        else
+            return -1;
     }
 }

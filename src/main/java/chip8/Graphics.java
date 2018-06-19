@@ -3,9 +3,7 @@ package chip8;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLCapabilities;
 import org.lwjgl.opengl.GLUtil;
-import org.lwjgl.system.Callback;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
@@ -14,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL15.*;
@@ -29,20 +28,23 @@ class Graphics
 {
 
     private static int[] display;
-
-
-    Graphics() {
+    private static boolean changed;
+    private static long window;
+    Graphics(long window) {
         display = new int[64 * 32];
+        changed = false;
+        Graphics.window = window;
+        createGL();
     }
 
-    static void createGL() {
+    private void createGL() {
         GL.createCapabilities();
         GLUtil.setupDebugMessageCallback();
         float vertices[] = { //lifted from open.gl/textures
                 //  Position    Texcoords
-                -1.0f,  1.0f, 0.0f, 0.0f, // Top-left 0
-                1.0f,  1.0f,  1.0f, 0.0f, // Top-right 1
-                1.0f, -1.0f,  1.0f, 1.0f, // Bottom-right 2
+                -1.0f, 1.0f, 0.0f, 0.0f, // Top-left 0
+                1.0f, 1.0f, 1.0f, 0.0f, // Top-right 1
+                1.0f, -1.0f, 1.0f, 1.0f, // Bottom-right 2
                 -1.0f, -1.0f, 0.0f, 1.0f  // Bottom-left 3
         };
 
@@ -54,7 +56,7 @@ class Graphics
         int vao = glGenVertexArrays();
         glBindVertexArray(vao);
 
-        FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(4*4);
+        FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(4 * 4);
         vertexBuffer.put(vertices).flip();
         int vbo = glCreateBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -83,7 +85,7 @@ class Graphics
             glGetShaderiv(vertexShader, GL_COMPILE_STATUS, statusV);
             glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, statusF);
 
-            if(statusV[0] == GL_FALSE || statusF[0] == GL_FALSE) {
+            if (statusV[0] == GL_FALSE || statusF[0] == GL_FALSE) {
                 throw new RuntimeException("Failed to compile the shaders.");
             }
         } catch (IOException e) {
@@ -114,10 +116,14 @@ class Graphics
         return new String(Files.readAllBytes(Paths.get(s)), StandardCharsets.UTF_8);
     }
 
-    static void render() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        generateTexture();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    void render() {
+        if(changed){
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            generateTexture();
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            glfwSwapBuffers(window);
+            changed = false;
+        }
     }
 
     private static void generateTexture() {
@@ -138,10 +144,10 @@ class Graphics
 
     boolean draw(int x, int y, int height, int I, Memory mem) {
         boolean collision = false;
-        for(int i = 0; i < height; i++) {
-            int b = mem.readByte(I+i);
+        for (int i = 0; i < height; i++) {
+            int b = mem.readByte(I + i);
             int mask = 1 << 7;
-            for(int j = 0; j < 8; j++) {
+            for (int j = 0; j < 8; j++) {
                 int pos = (x + j + ((y + i) << 6)) % 2048;
                 int prev = display[pos];
                 display[pos] ^= ((b & mask) != 0) ? 0xFFFFFFFF : 0;
@@ -150,6 +156,7 @@ class Graphics
                 mask >>>= 1;
             }
         }
+        changed = true;
         return collision;
     }
 }
