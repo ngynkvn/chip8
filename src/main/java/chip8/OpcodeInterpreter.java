@@ -51,6 +51,7 @@ class OpcodeInterpreter
                 break;
             case 0x7000:
                 cpu.register[x] += kk;
+                correctOverUnderflow(x);
                 break;
             case 0x8000:
                 switch (lastNibble) {
@@ -69,30 +70,27 @@ class OpcodeInterpreter
                     case 0x004:
                         ifSetVF((cpu.register[x] + cpu.register[y]) > 255);
                         cpu.register[x] += cpu.register[y];
-                        if(cpu.register[x] > 255)
-                            cpu.register[x] -= 256;
+                        correctOverUnderflow(x);
                         break;
                     case 0x005:
                         ifSetVF(cpu.register[x] >= cpu.register[y]);
                         cpu.register[x] -= cpu.register[y];
-                        if(cpu.register[x] < 0)
-                            cpu.register[x] += 256;
+                        correctOverUnderflow(x);
                         break;
                     case 0x006:
                         ifSetVF((cpu.register[x] & 1) == 1);
                         cpu.register[x] >>= 1;
+                        correctOverUnderflow(x);
                         break;
                     case 0x007:
                         ifSetVF(cpu.register[y] >= cpu.register[x]);
                         cpu.register[x] = (cpu.register[y] - cpu.register[x]);
-                        if(cpu.register[x] < 0)
-                            cpu.register[x] += 256;
+                        correctOverUnderflow(x);
                         break;
                     case 0x00E:
                         ifSetVF((cpu.register[x] >>> 7) == 1);
                         cpu.register[x] <<= 1;
-                        if(cpu.register[x] > 255)
-                            cpu.register[x] -= 256;
+                        correctOverUnderflow(x);
                         break;
                     default:
                         throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
@@ -177,6 +175,10 @@ class OpcodeInterpreter
             default:
                 throw new IllegalArgumentException(String.format("Encountered unknown opcode: %X", code));
         }
+    }
+
+    private void correctOverUnderflow(int x) {
+        cpu.register[x] = Byte.toUnsignedInt((byte)cpu.register[x]);
     }
 
     private void skipIf(boolean predicate) {
